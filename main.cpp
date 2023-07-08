@@ -53,7 +53,7 @@ int main(int count, char** args) {
     windowsify(path);
     enquote(path);
 
-    string takeown = "takeown /f " + path;
+    string takeown = "takeown /r /f " + path;
     system(takeown.data());
 
     string icacls = "icacls " + path + " /grant \"%USERDOMAIN%\\%USERNAME%\":(F) /t";
@@ -67,7 +67,3 @@ int main(int count, char** args) {
 
     return 0;
 }
-
-
-
-
