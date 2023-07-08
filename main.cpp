@@ -48,7 +48,7 @@ int main(int count, char** args) {
     }
 
     string path = string(args[1]);
-    if(path.length() == 1 && path[0] == '/' || path[0] == '\\'){
+    if(path.length() == 1 && (path[0] == '/' || path[0] == '\\' || path[0] == '.')){
         printf("Dangerous path provided, exiting..");
         return 0;
     }
@@ -65,7 +65,7 @@ int main(int count, char** args) {
     enquote(path);
 
     //swapping \ to / results in "file not found"
-    exit(0);
+
     string takeown = is_dir ? "takeown /r /f " + path : "takeown /f " + path;
     system(takeown.data());
 
