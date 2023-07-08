@@ -1,5 +1,7 @@
 #include <iostream>
 #include <cstring>
+#include <filesystem>
+
 using namespace std;
 /**
  * Begone
@@ -16,12 +18,10 @@ void enquote(string& path){
 }
 
 void windowsify(string& path){
-    if(path.length() < 2){
+    if(path.length() < 2 || path[0] != '/')
         return;
-    }
-    if(path[0] == '/'){
-        path = path.substr(1, path.length()-1);
-    }
+
+    path = path.substr(1, path.length()-1);
     bool letter_found = false;
     for (int i = 0; i < path.length(); ++i) {
         if(!letter_found && isalpha(path[i])){
@@ -29,18 +29,16 @@ void windowsify(string& path){
             continue;
         }
         if(letter_found){
-            if(path[i] == ':'){
-                return;
-            }
             if(path[i] == '/' || path[i] == '\\'){
-                // insert == prepend from
                 path.insert(i, ":");
                 return;
             }
         }
     }
-    printf("The path is invalid.. exiting");
-    exit(-1);
+    if(!letter_found){
+        printf("The path is invalid.. exiting");
+        exit(-1);
+    }
 }
 
 int main(int count, char** args) {
@@ -51,19 +49,31 @@ int main(int count, char** args) {
 
     string path = string(args[1]);
     windowsify(path);
-    enquote(path);
 
-    string takeown = "takeown /r /f " + path;
+    if(!filesystem::exists(path)){
+        printf("Path doesn't exist, exiting..");
+        return 0;
+    }
+
+    filesystem::path path_instance = filesystem::absolute(path);
+    bool is_dir = is_directory(path_instance);
+    path = path_instance.string();
+    enquote(path);
+    //swapping \ to / results in "file not found"
+
+    string takeown = is_dir ? "takeown /r /f " + path : "takeown /f " + path;
     system(takeown.data());
 
     string icacls = "icacls " + path + " /grant \"%USERDOMAIN%\\%USERNAME%\":(F) /t";
     system(icacls.data());
 
-    string del = "del /f /q " + path;
-    system(del.data());
-
-    string rmdir = "rd /s /q " + path;
-    system(rmdir.data());
+    if(is_dir){
+        string rmdir = "rd /s /q " + path;
+        system(rmdir.data());
+    }else{
+        string del = "del /f /q " + path;
+        system(del.data());
+    }
 
     return 0;
 }
